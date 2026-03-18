@@ -1,0 +1,9 @@
+.env
+*.md
+*.txt
+!requirements.txt
+__pycache__
+*.pyc
+data/dashboard.db-shm
+data/dashboard.db-wal
+.git

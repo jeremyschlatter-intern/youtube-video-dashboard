@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>House Committee YouTube Event ID Tracker</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>House Committee YouTube Event ID Tracker</h1>
+            <p class="subtitle">Tracking whether House committees include official Event IDs in their YouTube video descriptions, enabling the Library of Congress to index proceedings on congress.gov</p>
+        </div>
+    </header>
+
+    <main>
+        <!-- Overall Summary -->
+        <section id="summary" class="card">
+            <div class="summary-header">
+                <h2>Overall Compliance</h2>
+                <div class="data-freshness" id="data-freshness"></div>
+            </div>
+            <div id="summary-content" class="summary-grid">
+                <div class="loading">Loading data...</div>
+            </div>
+        </section>
+
+        <!-- Navigation Tabs -->
+        <nav class="tabs">
+            <button class="tab active" data-tab="rankings">Committee Rankings</button>
+            <button class="tab" data-tab="missing">Missing Event IDs</button>
+            <button class="tab" data-tab="export">Export for LOC</button>
+            <button class="tab" data-tab="about">About</button>
+        </nav>
+
+        <!-- Rankings Tab -->
+        <section id="rankings-tab" class="tab-content active">
+            <div class="card">
+                <p class="description">YouTube proceedings are videos 45+ minutes from committee channels. Official events are from the congress.gov API. Counts may differ due to subcommittee hearings, multi-day events, or channel upload practices.</p>
+                <div class="card-header">
+                    <h2>Committee Report Card</h2>
+                    <div class="sort-controls">
+                        <label>Sort by:</label>
+                        <select id="sort-select">
+                            <option value="grade">Grade (worst first)</option>
+                            <option value="grade-best">Grade (best first)</option>
+                            <option value="name">Committee Name</option>
+                            <option value="videos">Total Proceedings</option>
+                            <option value="compliance">Compliance %</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="committee-list" class="committee-grid">
+                    <div class="loading">Loading committees...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Missing IDs Tab -->
+        <section id="missing-tab" class="tab-content">
+            <div class="card">
+                <h2>Videos Missing Event IDs</h2>
+                <p class="description">These YouTube videos appear to be official committee proceedings (45+ minutes) but do not have an Event ID in their description. Without the Event ID, these proceedings cannot be indexed on congress.gov by the Library of Congress.</p>
+                <div class="filter-bar">
+                    <select id="committee-filter">
+                        <option value="">All Committees</option>
+                    </select>
+                    <input type="text" id="search-input" placeholder="Search videos...">
+                </div>
+                <div id="missing-list">
+                    <div class="loading">Loading...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Export Tab -->
+        <section id="export-tab" class="tab-content">
+            <div class="card">
+                <h2>Export for Library of Congress</h2>
+                <div class="about-content">
+                    <p>Download a CSV file mapping YouTube video URLs to their matched Event IDs. This data is suitable for delivery to the Library of Congress to backfill their records for prior years.</p>
+
+                    <h3>What's Included</h3>
+                    <ul>
+                        <li>All committee YouTube videos identified as proceedings (45+ minutes)</li>
+                        <li>Event IDs extracted directly from video descriptions (where present)</li>
+                        <li>Suggested Event ID matches based on fuzzy matching of dates and titles</li>
+                        <li>Match confidence scores and matching method</li>
+                        <li>Links to docs.house.gov event pages</li>
+                    </ul>
+
+                    <h3>CSV Columns</h3>
+                    <p><code>video_id, youtube_url, title, upload_date, duration_minutes, committee, committee_code, has_event_id_in_description, extracted_event_id, matched_event_id, match_confidence, match_method, docs_house_gov_url</code></p>
+
+                    <div style="margin-top: 1.5rem;">
+                        <a href="/api/export/loc" class="email-btn" style="text-decoration:none; display:inline-flex;">
+                            Download CSV Export
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Tab -->
+        <section id="about-tab" class="tab-content">
+            <div class="card">
+                <h2>About This Dashboard</h2>
+                <div class="about-content">
+                    <h3>The Problem</h3>
+                    <p>When House committees livestream or upload hearings, markups, and other proceedings to YouTube, the Library of Congress needs the official <strong>Event ID</strong> from <a href="https://docs.house.gov" target="_blank">docs.house.gov</a> to link those videos on <a href="https://congress.gov" target="_blank">congress.gov</a>. Without the Event ID in the video description, proceedings effectively go missing from the official legislative record.</p>
+
+                    <p>At the June 2025 Congressional Data Task Force Meeting, the Library of Congress worked with the House Digital Service to identify unlabeled videos with their proper Event IDs. However, that effort only covered 2025 data. This dashboard extends that work to prior years and provides ongoing tracking.</p>
+
+                    <h3>How It Works</h3>
+                    <ul>
+                        <li><strong>YouTube Scanning:</strong> We scan each House committee's YouTube channel for videos that appear to be full proceedings (45+ minutes, excluding press conferences and interviews).</li>
+                        <li><strong>Event ID Detection:</strong> We check each video's description for an Event ID (e.g., "EventID=118951").</li>
+                        <li><strong>Cross-Referencing:</strong> We pull official hearing data from the <a href="https://api.congress.gov" target="_blank">congress.gov API</a> and match videos to official events using dates, titles, and committee membership.</li>
+                        <li><strong>Grading:</strong> Committees are graded on what percentage of their YouTube proceedings include Event IDs.</li>
+                    </ul>
+
+                    <h3>Grading Scale</h3>
+                    <p>The grading scale is calibrated to the current reality where most committees do not include Event IDs:</p>
+                    <table class="grade-table">
+                        <tr><td class="grade grade-a">A</td><td>50%+ of proceedings include Event IDs</td></tr>
+                        <tr><td class="grade grade-b">B</td><td>30-49% include Event IDs</td></tr>
+                        <tr><td class="grade grade-c">C</td><td>15-29% include Event IDs</td></tr>
+                        <tr><td class="grade grade-d">D</td><td>5-14% include Event IDs</td></tr>
+                        <tr><td class="grade grade-f">F</td><td>Less than 5% include Event IDs</td></tr>
+                    </table>
+
+                    <h3>Event ID Formats Used by Committees</h3>
+                    <p>Committees that include Event IDs use various formats in their video descriptions:</p>
+                    <ul>
+                        <li><code>EventID=118951</code> (Appropriations style)</li>
+                        <li><code>Event ID: 118951</code> (Judiciary Democrats style)</li>
+                        <li>Embedded in docs.house.gov or congress.gov URLs</li>
+                    </ul>
+
+                    <h3>Background</h3>
+                    <p>This project was proposed as part of the <a href="https://www.congress.gov/congressional-data-task-force" target="_blank">Congressional Data Task Force</a> initiative to improve access to legislative information. The goal is to encourage all committees to consistently include Event IDs, and to provide the Library of Congress with backfill data for prior years.</p>
+
+                    <h3>Data Sources</h3>
+                    <ul>
+                        <li>YouTube committee channels (metadata via yt-dlp)</li>
+                        <li><a href="https://api.congress.gov" target="_blank">Congress.gov API</a> for official committee meeting data</li>
+                        <li><a href="https://docs.house.gov" target="_blank">docs.house.gov</a> for event records and Event IDs</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Committee Detail Modal -->
+        <div id="committee-modal" class="modal" style="display:none;">
+            <div class="modal-backdrop"></div>
+            <div class="modal-content card">
+                <button class="modal-close">&times;</button>
+                <div id="modal-body">
+                    <div class="loading">Loading...</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>Data sourced from YouTube and congress.gov API. Tracks House committee compliance with Event ID labeling to support congressional transparency.</p>
+    </footer>
+
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>
